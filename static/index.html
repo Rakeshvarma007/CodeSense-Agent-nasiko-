@@ -181,10 +181,18 @@
             font-family: var(--font-code);
             font-size: 15px; line-height: 1.6;
             resize: none;
+            transition: all 0.2s;
         }
         .editor::placeholder { color: var(--text-muted); opacity: 0.5; }
 
-        /* --- NEW FEATURE: STYLE SELECTOR --- */
+        /* --- DRAG & DROP STYLES --- */
+        .editor.drag-over {
+            background: rgba(255, 255, 255, 0.05);
+            box-shadow: inset 0 0 20px var(--accent-glow);
+            border: 2px dashed var(--accent);
+        }
+
+        /* --- STYLE SELECTOR --- */
         .style-select {
             background: rgba(0,0,0,0.2);
             border: 1px solid var(--panel-border);
@@ -194,7 +202,7 @@
             font-family: var(--font-ui);
             font-size: 0.8rem;
             outline: none;
-            margin-left: auto; /* Push to right */
+            margin-left: auto;
             margin-right: 10px;
             cursor: pointer;
             transition: all 0.2s;
@@ -204,10 +212,9 @@
             color: var(--text-main);
         }
         .style-select option {
-            background: #0f172a; /* Dark background for options */
+            background: #0f172a;
             color: white;
         }
-        /* Theme overrides for selector */
         body.theme-cyberpunk .style-select { border-color: var(--text-muted); border-radius: 0; }
         body.theme-saas .style-select { background: white; color: #1e293b; border-color: #cbd5e1; }
         body.theme-saas .style-select option { background: white; color: #1e293b; }
@@ -215,7 +222,7 @@
 
         /* --- HEALTH BADGE --- */
         .health-badge {
-            display: none; /* Hidden by default */
+            display: none;
             align-items: center;
             gap: 10px;
             padding: 4px 12px;
@@ -236,7 +243,6 @@
             color: #000;
         }
 
-        /* Health Colors */
         .health-A { background: rgba(34, 197, 94, 0.2); border-color: #22c55e; color: #22c55e; }
         .health-A .rank-circle { background: #22c55e; }
 
@@ -249,7 +255,6 @@
         .health-F { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; color: #ef4444; }
         .health-F .rank-circle { background: #ef4444; color: white;}
 
-        /* Cyberpunk Badge Override */
         body.theme-cyberpunk .health-badge {
             border-radius: 0;
             background: black;
@@ -333,9 +338,13 @@
                     <option value="Epytext">Epytext</option>
                 </select>
 
+                <button class="icon-btn" onclick="document.getElementById('fileInput').click()" title="Upload File">📂</button>
+                <input type="file" id="fileInput" style="display: none;" accept=".py,.txt">
+
                 <button class="icon-btn" onclick="document.getElementById('codeInput').value=''" title="Clear Code">🗑️</button>
             </div>
-            <textarea id="codeInput" class="editor" spellcheck="false" placeholder="# Paste Python code here...&#10;&#10;def mission_start():&#10;    print('Ready')"></textarea>
+            
+            <textarea id="codeInput" class="editor" spellcheck="false" placeholder="# Paste Python code here...&#10;# OR Drag & Drop a .py file"></textarea>
         </div>
 
         <div class="actions">
@@ -357,13 +366,53 @@
                     </div>
 
                 </div>
-                <button class="icon-btn" onclick="copyToClipboard()" title="Copy to Clipboard">📋</button>
+                <div style="display:flex; gap: 5px;">
+                    <button class="icon-btn" onclick="downloadCode()" title="Download File">⬇️</button>
+                    <button class="icon-btn" onclick="copyToClipboard()" title="Copy to Clipboard">📋</button>
+                </div>
             </div>
             <textarea id="outputCode" class="editor" readonly placeholder="// Output awaits..."></textarea>
         </div>
     </main>
 
     <script>
+        // --- DRAG AND DROP LOGIC ---
+        const dropZone = document.getElementById('codeInput');
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            e.dataTransfer.dropEffect = 'copy';
+            dropZone.classList.add('drag-over');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            dropZone.classList.remove('drag-over');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.stopPropagation(); e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) readFile(files[0]);
+        });
+
+        // --- MANUAL UPLOAD LOGIC ---
+        const fileInput = document.getElementById('fileInput');
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) readFile(file);
+        });
+
+        // --- SHARED FILE READING FUNCTION ---
+        function readFile(file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                document.getElementById('codeInput').value = event.target.result;
+            };
+            reader.readAsText(file);
+        }
+
         function setTheme(themeName) {
             const body = document.body;
             body.className = '';
@@ -391,7 +440,7 @@
 
         async function generateDocs() {
             const inputCode = document.getElementById("codeInput").value;
-            const styleInput = document.getElementById("docStyle").value; // <--- GET STYLE
+            const styleInput = document.getElementById("docStyle").value;
             const outputArea = document.getElementById("outputCode");
             const btn = document.getElementById("generateBtn");
             const icon = document.getElementById("btnIcon");
@@ -403,7 +452,6 @@
                 return;
             }
 
-            // Reset UI
             badge.style.display = 'none';
             btn.disabled = true;
             icon.style.display = "none";
@@ -417,7 +465,7 @@
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ 
                         code: inputCode,
-                        style: styleInput  // <--- SEND STYLE TO BACKEND
+                        style: styleInput
                     })
                 });
 
@@ -425,11 +473,7 @@
 
                 if (response.ok) {
                     outputArea.style.opacity = "1";
-                    
-                    // 1. Show Code
                     typeWriter(data.documented_code, outputArea);
-                    
-                    // 2. Show Health Badge (The WOW moment)
                     if (data.health) {
                         updateBadge(data.health);
                     }
@@ -451,17 +495,10 @@
             const rankEl = document.getElementById("badgeRank");
             const labelEl = document.getElementById("badgeLabel");
 
-            // Reset classes
             badge.className = "health-badge";
-            
-            // Set Color Class
             badge.classList.add("health-" + health.rank);
-            
-            // Set Content
             rankEl.innerText = health.rank;
             labelEl.innerText = health.label + " (Score: " + health.score + ")";
-            
-            // Show
             badge.style.display = "flex";
         }
 
@@ -486,6 +523,24 @@
             navigator.clipboard.writeText(text).then(() => {
                 alert("Copied to clipboard!");
             });
+        }
+
+        // --- NEW DOWNLOAD FUNCTION ---
+        function downloadCode() {
+            const text = document.getElementById("outputCode").value;
+            if(!text) return;
+
+            const blob = new Blob([text], { type: "text/x-python" });
+            const link = document.createElement("a");
+            
+            link.href = URL.createObjectURL(blob);
+            link.download = "documented_code.py";
+            
+            document.body.appendChild(link);
+            link.click();
+            
+            document.body.removeChild(link);
+            URL.revokeObjectURL(link.href);
         }
     </script>
 </body>

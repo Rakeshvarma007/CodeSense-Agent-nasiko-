@@ -52,3 +52,10 @@ once you open the folder in terminal run this command
 ```bash
 python3 -m app
 ``` 
+
+## how to use
+### you can copy paste the code , drag and drop the file, or even upload it by clicking the folder(📂) icon
+
+### select the docstring format
+
+### click the ⬇️ to download the output file with docstring (or click 📋 to copy).
