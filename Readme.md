@@ -30,17 +30,24 @@ The agent operates as a dual-process microservice:
 
 ## Usage Instructions
 
-### 1. API_KEY
+### 1.clone
+clone the repository using
+```bash
+git clone https://github.com/Rakeshvarma007/CodeSense-Agent-nasiko-
+```
+
+### 2. API_KEY
 create an file called .env and type 
 GOOGLE_API_KEY="YOUR-API-KEY"
+Enter your api code from Google AI Studio
 
-### 2. installing requirements
-Clone the repository and install dependencies:
+### 3. installing requirements
+install dependencies:
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. runing the code
+### 4. runing the code
 once you open the folder in terminal run this command
 ```bash
 python3 -m app
