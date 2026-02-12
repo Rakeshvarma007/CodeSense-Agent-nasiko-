@@ -30,7 +30,11 @@ The agent operates as a dual-process microservice:
 
 ## Usage Instructions
 
-### 1. Setup
+### 1. API_KEY
+create an file called .env and type 
+GOOGLE_API_KEY="YOUR-API-KEY"
+
+### 2. installing requirements
 Clone the repository and install dependencies:
 ```bash
 pip install -r requirements.txt
