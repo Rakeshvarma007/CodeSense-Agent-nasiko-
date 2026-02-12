@@ -184,7 +184,36 @@
         }
         .editor::placeholder { color: var(--text-muted); opacity: 0.5; }
 
-        /* --- HEALTH BADGE (NEW FEATURE) --- */
+        /* --- NEW FEATURE: STYLE SELECTOR --- */
+        .style-select {
+            background: rgba(0,0,0,0.2);
+            border: 1px solid var(--panel-border);
+            color: var(--text-muted);
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-family: var(--font-ui);
+            font-size: 0.8rem;
+            outline: none;
+            margin-left: auto; /* Push to right */
+            margin-right: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .style-select:hover {
+            border-color: var(--accent);
+            color: var(--text-main);
+        }
+        .style-select option {
+            background: #0f172a; /* Dark background for options */
+            color: white;
+        }
+        /* Theme overrides for selector */
+        body.theme-cyberpunk .style-select { border-color: var(--text-muted); border-radius: 0; }
+        body.theme-saas .style-select { background: white; color: #1e293b; border-color: #cbd5e1; }
+        body.theme-saas .style-select option { background: white; color: #1e293b; }
+
+
+        /* --- HEALTH BADGE --- */
         .health-badge {
             display: none; /* Hidden by default */
             align-items: center;
@@ -296,7 +325,15 @@
                     <div class="dots"><div class="dot red"></div><div class="dot yellow"></div><div class="dot green"></div></div>
                     <span>Input Source</span>
                 </div>
-                <button class="icon-btn" onclick="document.getElementById('codeInput').value=''">🗑️</button>
+
+                <select id="docStyle" class="style-select">
+                    <option value="Google">Google Style</option>
+                    <option value="NumPy">NumPy Style</option>
+                    <option value="Sphinx/reStructuredText">Sphinx / RST</option>
+                    <option value="Epytext">Epytext</option>
+                </select>
+
+                <button class="icon-btn" onclick="document.getElementById('codeInput').value=''" title="Clear Code">🗑️</button>
             </div>
             <textarea id="codeInput" class="editor" spellcheck="false" placeholder="# Paste Python code here...&#10;&#10;def mission_start():&#10;    print('Ready')"></textarea>
         </div>
@@ -320,7 +357,7 @@
                     </div>
 
                 </div>
-                <button class="icon-btn" onclick="copyToClipboard()">📋</button>
+                <button class="icon-btn" onclick="copyToClipboard()" title="Copy to Clipboard">📋</button>
             </div>
             <textarea id="outputCode" class="editor" readonly placeholder="// Output awaits..."></textarea>
         </div>
@@ -354,6 +391,7 @@
 
         async function generateDocs() {
             const inputCode = document.getElementById("codeInput").value;
+            const styleInput = document.getElementById("docStyle").value; // <--- GET STYLE
             const outputArea = document.getElementById("outputCode");
             const btn = document.getElementById("generateBtn");
             const icon = document.getElementById("btnIcon");
@@ -377,7 +415,10 @@
                 const response = await fetch('/generate-docs/', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code: inputCode })
+                    body: JSON.stringify({ 
+                        code: inputCode,
+                        style: styleInput  // <--- SEND STYLE TO BACKEND
+                    })
                 });
 
                 const data = await response.json();

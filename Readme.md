@@ -38,3 +38,10 @@ GOOGLE_API_KEY="YOUR-API-KEY"
 Clone the repository and install dependencies:
 ```bash
 pip install -r requirements.txt
+```
+
+### 3. runing the code
+once you open the folder in terminal run this command
+```bash
+python3 -m app
+``` 

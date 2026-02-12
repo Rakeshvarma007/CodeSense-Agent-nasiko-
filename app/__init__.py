@@ -18,17 +18,15 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.post("/generate-docs/")
 async def generate_docs(input_data: CodeInput):
-    # 1. Generate Docs (LLM)
-    doc_code = agent.generate_docstrings(input_data.code)
+    # Pass input_data.style to the agent
+    doc_code = agent.generate_docstrings(input_data.code, input_data.style)
     
-    # 2. Analyze Health (Tool)
     health_stats = agent.analyze_health(input_data.code)
     
     return {
         "documented_code": doc_code,
         "health": health_stats
     }
-
 @app.get("/")
 async def serve_ui():
     # Helper to find index.html
